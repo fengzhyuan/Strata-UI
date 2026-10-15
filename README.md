@@ -1,4 +1,8 @@
 <p align="center"><img src="docs/icon.png" width="128" alt="StrataBar icon"></p>
+<p align="center">
+  <a href="https://github.com/fengzhyuan/Strata-UI/releases/latest/download/StrataBar.zip"><b>Download StrataBar for macOS</b></a><br>
+  <sub>Apple Silicon · macOS 15 or newer · signed and notarized · <a href="https://github.com/fengzhyuan/Strata-UI/releases">all releases</a></sub>
+</p>
 
 # StrataBar
 
