@@ -46,6 +46,13 @@ open ~/Applications/StrataBar.app
 made on the same Mac. Run `./build.sh` again after pulling changes: it replaces the app, and a running model is
 not affected.
 
+## Release builds
+
+`./release.sh` builds the app for a GitHub release: signed with a Developer ID, notarized by Apple and stapled, so
+a downloaded copy opens without a Gatekeeper prompt. It writes `build/release/StrataBar-<version>.zip`. It needs a
+Developer ID Application certificate and a `notarytool` keychain profile; the top of the script says how to set
+them up.
+
 ## How it works
 
 | | |
