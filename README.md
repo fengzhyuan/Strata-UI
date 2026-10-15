@@ -34,9 +34,18 @@ Nothing starts at login: the service starts only when you choose **Start Service
 - An Apple Silicon Mac with macOS 15 or newer, as Strata on a Mac needs ([Strata's docs/MAC.md](https://github.com/Niko1221/Strata/blob/main/docs/MAC.md)).
 - Strata installed with its `./setup.sh`. StrataBar looks for it in `~/Strata`; a different folder can be chosen
   in the menu.
-- The Command Line Tools (`xcode-select --install`), for `swiftc`. Strata's setup needs them too.
+- To build from source: the Command Line Tools (`xcode-select --install`), for `swiftc`. Strata's setup needs them
+  too.
 
-## Build and install
+## Download
+
+**[Download StrataBar for macOS](https://github.com/fengzhyuan/Strata-UI/releases/latest/download/StrataBar.zip)**
+(Apple Silicon, macOS 15 or newer; signed with a Developer ID and notarized by Apple). Unzip it, move
+`StrataBar.app` into Applications and open it. macOS asks once whether to open an app downloaded from the internet.
+
+Older versions and their notes are on the [releases page](https://github.com/fengzhyuan/Strata-UI/releases).
+
+## Build from source
 
 ```sh
 git clone https://github.com/fengzhyuan/Strata-UI.git
@@ -52,9 +61,10 @@ not affected.
 ## Release builds
 
 `./release.sh` builds the app for a GitHub release: signed with a Developer ID, notarized by Apple and stapled, so
-a downloaded copy opens without a Gatekeeper prompt. It writes `build/release/StrataBar-<version>.zip`. It needs a
-Developer ID Application certificate and a `notarytool` keychain profile; the top of the script says how to set
-them up.
+a downloaded copy opens without a Gatekeeper prompt. It writes `build/release/StrataBar.zip`, the asset to upload
+to a release tagged `v<version>` (the version in `Info.plist`); the name stays the same in every release, so the
+download link above always gets the latest. It needs a Developer ID Application certificate and a `notarytool`
+keychain profile; the top of the script says how to set them up.
 
 ## How it works
 

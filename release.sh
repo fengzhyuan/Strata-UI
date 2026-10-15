@@ -1,7 +1,7 @@
 #!/bin/bash
 # Builds StrataBar for a GitHub release: signed with a Developer ID, notarized by Apple and stapled, so it opens on
-# any Mac without a Gatekeeper prompt. Writes build/release/StrataBar-<version>.zip. For a build used only on this
-# Mac, ./build.sh is enough.
+# any Mac without a Gatekeeper prompt. Writes build/release/StrataBar.zip, to upload to a release tagged
+# v<version>. For a build used only on this Mac, ./build.sh is enough.
 #
 # Needs, once per Mac (a paid Apple Developer Program membership):
 #   - a "Developer ID Application" certificate with its private key in the keychain
@@ -16,7 +16,7 @@ PROFILE="${NOTARY_PROFILE:-strata-notary}"
 VERSION=$(/usr/libexec/PlistBuddy -c "Print CFBundleShortVersionString" Info.plist)
 OUT=build/release
 APP="$OUT/StrataBar.app"
-ZIP="$OUT/StrataBar-$VERSION.zip"
+ZIP="$OUT/StrataBar.zip"            # the same name in every release: README links releases/latest/download/StrataBar.zip
 SWIFTC=(swiftc -parse-as-library -swift-version 5 -O -target arm64-apple-macos15)
 
 # its own build, apart from build.sh's: build.sh replaces the installed app (and quits it)
@@ -49,4 +49,4 @@ xcrun stapler staple "$APP"
 xcrun stapler validate "$APP"
 spctl --assess --type execute --verbose=2 "$APP"
 ditto -c -k --keepParent "$APP" "$ZIP"
-echo "release: $ZIP"
+echo "release v$VERSION: $ZIP"
