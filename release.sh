@@ -22,7 +22,7 @@ SWIFTC=(swiftc -parse-as-library -swift-version 5 -O -target arm64-apple-macos15
 # its own build, apart from build.sh's: build.sh replaces the installed app (and quits it)
 rm -rf "$OUT"
 mkdir -p "$OUT"
-"${SWIFTC[@]}" Sources/StrataBar.swift Sources/StrataIcon.swift -o "$OUT/StrataBar"
+"${SWIFTC[@]}" Sources/StrataBar.swift Sources/SetupWindow.swift Sources/StrataIcon.swift -o "$OUT/StrataBar"
 "${SWIFTC[@]}" Sources/MakeIcon.swift Sources/StrataIcon.swift -o "$OUT/make-icon"
 "$OUT/make-icon" "$OUT/AppIcon.iconset"
 iconutil -c icns "$OUT/AppIcon.iconset" -o "$OUT/AppIcon.icns"

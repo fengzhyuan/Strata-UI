@@ -17,6 +17,10 @@ enum Paths {
     // KeepAlive implies RunAtLoad, so launchd would start the model at every login
     static let jobPlist = home + "/Library/Application Support/StrataBar/server.plist"
     static let log = home + "/Library/Logs/StrataBar/server.log"
+    static let setupLabel = "io.github.fengzhyuan.StrataBar.setup"         // Set up Strata (SetupWindow.swift)
+    static let setupPlist = home + "/Library/Application Support/StrataBar/setup.plist"
+    static let setupScript = home + "/Library/Application Support/StrataBar/setup-strata.sh"
+    static let setupLog = home + "/Library/Logs/StrataBar/setup.log"
     static var domain: String { "gui/\(getuid())" }
 
     /// Strata's folder (where its setup.sh ran): ~/Strata unless chosen in the menu
@@ -68,10 +72,11 @@ struct RunConfig {
 }
 
 enum ServiceState {
-    case stopped, starting, loaded, paused, loading, pausing, stopping
+    case stopped, starting, loaded, paused, loading, pausing, stopping, installing
 
     var title: String {
         switch self {
+        case .installing: "Setting up Strata…"
         case .stopped: "Stopped"
         case .starting: "Starting…"
         case .loaded: "Running"
@@ -107,6 +112,7 @@ final class StrataController: ObservableObject {
     @Published private(set) var configs: [String] = []      // the run configs' model names
     @Published private(set) var selectedConfig = ""
     @Published private(set) var apiMonitor = false          // the chosen config turns the API monitor on
+    let setup = SetupController()                           // Set up Strata, when there is none
     private var timer: Timer?
     private var animator: Timer?
 
@@ -130,6 +136,7 @@ final class StrataController: ObservableObject {
                 if let self, self.state.isBusy { self.frame += 1 }
             }
         }
+        setup.onDone = { [weak self] in Task { await self?.refresh() } }
         Task { await refresh() }
     }
 
@@ -144,7 +151,7 @@ final class StrataController: ObservableObject {
         managed = j
         if let h { model = h.model }
         // the HTTP server only answers once the model is loaded, so "job loaded, no answer" is a start in progress
-        observed = h.map { $0.loaded ? .loaded : .paused } ?? (j ? .starting : .stopped)
+        observed = h.map { $0.loaded ? .loaded : .paused } ?? (j ? .starting : setup.isRunning ? .installing : .stopped)
         if action == .starting && observed != .starting { action = nil }
     }
 
@@ -315,11 +322,15 @@ final class StrataController: ObservableObject {
 
 struct MenuContent: View {
     @ObservedObject var strata: StrataController
+    @ObservedObject var setup: SetupController
     @Environment(\.openWindow) private var openWindow
 
     var body: some View {
         let s = strata.state
         Text("Strata · \(s.title)")
+        if s == .installing && !setup.status.step.isEmpty {
+            Text(setup.status.step + (setup.status.progress.map { String(format: " (%.0f%%)", $0 * 100) } ?? ""))
+        }
         if !strata.model.isEmpty && s != .stopped {
             Text(strata.model)
         }
@@ -354,6 +365,10 @@ struct MenuContent: View {
         }
         Divider()
         if strata.configs.isEmpty {
+            Button("Set Up Strata…") {
+                openWindow(id: "setup")
+                NSApp.activate()
+            }
             Button("Choose Strata Folder…") { strata.chooseFolder() }
         } else if strata.configs.count > 1 {
             Menu("Model") {
@@ -536,7 +551,7 @@ struct StrataBarApp: App {
 
     var body: some Scene {
         MenuBarExtra {
-            MenuContent(strata: strata)
+            MenuContent(strata: strata, setup: strata.setup)
         } label: {
             Image(nsImage: StrataIcon.menuBarImage(strata.glyph))
         }
@@ -554,6 +569,13 @@ struct StrataBarApp: App {
         }
         .defaultSize(width: 1200, height: 800)
         .defaultLaunchBehavior(.suppressed)
+        .restorationBehavior(.disabled)
+
+        Window("Set up Strata", id: "setup") {
+            SetupWindow(setup: strata.setup, strata: strata)
+        }
+        .windowResizability(.contentSize)
+        .defaultLaunchBehavior(RunConfig.all().isEmpty ? .presented : .suppressed)   // the first start without Strata
         .restorationBehavior(.disabled)
     }
 }

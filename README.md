@@ -32,8 +32,8 @@ Nothing starts at login: the service starts only when you choose **Start Service
 ## What you need
 
 - An Apple Silicon Mac with macOS 15 or newer, as Strata on a Mac needs ([Strata's docs/MAC.md](https://github.com/Niko1221/Strata/blob/main/docs/MAC.md)).
-- Strata installed with its `./setup.sh`. StrataBar looks for it in `~/Strata`; a different folder can be chosen
-  in the menu.
+- Strata, installed with its `./setup.sh`. StrataBar looks for it in `~/Strata`; a different folder can be chosen
+  in the menu. Without it, StrataBar offers to set it up ([below](#setting-up-strata)).
 - To build from source: the Command Line Tools (`xcode-select --install`), for `swiftc`. Strata's setup needs them
   too.
 
@@ -44,6 +44,31 @@ Nothing starts at login: the service starts only when you choose **Start Service
 `StrataBar.app` into Applications and open it. macOS asks once whether to open an app downloaded from the internet.
 
 Older versions and their notes are on the [releases page](https://github.com/fengzhyuan/Strata-UI/releases).
+
+## Setting up Strata
+
+When StrataBar finds no Strata, it opens **Set up Strata** (also in the menu as **Set Up Strata…**). It first checks
+this Mac, and installs nothing until **Install Strata** is chosen:
+
+| Check | Stops the install when |
+|---|---|
+| Chip | not Apple Silicon |
+| macOS | older than 15 |
+| Command Line Tools | missing (a button opens Apple's installer for them) |
+| Memory | under 32 GB, the smallest Mac Strata was measured on. From 32 to 63 GB it installs, with a note that part of the model is read from the SSD while it runs (slower) |
+| Disk | less free space than the model download plus about 11 GB (Strata's own margin, its engine build and Python) |
+
+The window names the model Strata's setup is expected to choose for this Mac's memory (IQ3_S from 96 GB, IQ3_XXS
+from 74 GB, else Q2_0, as in [Strata's docs/MAC.md](https://github.com/Niko1221/Strata/blob/main/docs/MAC.md)) and
+the download size. Setup makes the choice itself.
+
+**Install Strata** then clones Strata's latest release from GitHub into `~/Strata` (the local branch `main` at the
+release tag, so Strata's own `./update.sh` works later) and runs `./setup.sh --yes --no-start`: Strata's setup with
+its recommended answers, which builds the engine and downloads the model into `~/Strata-data`. That takes an hour or
+more on a slow connection. It runs as the launchd job `io.github.fengzhyuan.StrataBar.setup`, so closing the window
+or quitting StrataBar does not stop it; the menu shows its step. Its log is `~/Library/Logs/StrataBar/setup.log`.
+When it fails (a lost connection, for example), **Retry** runs it again and Strata's setup continues where it
+stopped.
 
 ## Build from source
 
@@ -89,6 +114,9 @@ launchctl bootout gui/$(id -u)/io.github.fengzhyuan.StrataBar.server   # if the 
 rm -rf ~/Applications/StrataBar.app "$HOME/Library/Application Support/StrataBar" ~/Library/Logs/StrataBar
 defaults delete io.github.fengzhyuan.StrataBar
 ```
+
+This leaves Strata itself. To remove it too, delete its folder and its model files (`~/Strata` and `~/Strata-data`,
+or wherever they are).
 
 ## Tested on
 

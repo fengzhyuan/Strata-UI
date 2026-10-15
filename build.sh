@@ -8,7 +8,7 @@ APP="$DEST/StrataBar.app"
 SWIFTC=(swiftc -parse-as-library -swift-version 5 -O -target arm64-apple-macos15)
 
 mkdir -p build
-"${SWIFTC[@]}" Sources/StrataBar.swift Sources/StrataIcon.swift -o build/StrataBar
+"${SWIFTC[@]}" Sources/StrataBar.swift Sources/SetupWindow.swift Sources/StrataIcon.swift -o build/StrataBar
 "${SWIFTC[@]}" Sources/MakeIcon.swift Sources/StrataIcon.swift -o build/make-icon
 rm -rf build/AppIcon.iconset
 build/make-icon build/AppIcon.iconset
