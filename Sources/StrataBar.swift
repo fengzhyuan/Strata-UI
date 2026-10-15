@@ -516,22 +516,34 @@ struct StrataWebView: NSViewRepresentable {
 
 // MARK: app
 
+/// The menu bar icon. It is there for as long as the app runs, so it hands SwiftUI's openWindow to AppDelegate for the
+/// Dock icon's click.
+struct MenuBarLabel: View {
+    @ObservedObject var strata: StrataController
+    @Environment(\.openWindow) private var openWindow
+
+    var body: some View {
+        Image(nsImage: StrataIcon.menuBarImage(strata.glyph))
+            .onAppear {
+                AppDelegate.openChat = {
+                    NSApp.setActivationPolicy(.regular)
+                    openWindow(id: "chat")
+                    NSApp.activate()
+                }
+            }
+    }
+}
+
 final class AppDelegate: NSObject, NSApplicationDelegate {
+    static var openChat: (() -> Void)?                  // set by the menu bar icon, which has SwiftUI's openWindow
+
     func applicationDidFinishLaunching(_ notification: Notification) {
-        // as Ollama: a Dock icon (and ⌘Tab) while one of StrataBar's windows is open, else only the menu bar icon.
-        // A window shown without the menu (the first start's Set up Strata) brings the icon too.
-        let center = NotificationCenter.default
-        center.addObserver(forName: NSWindow.didBecomeKeyNotification, object: nil, queue: .main) { note in
+        // as Ollama: the menu bar icon only until a window opens, then also the Dock icon (and ⌘Tab) until StrataBar
+        // quits. A window shown without the menu (the first start's Set up Strata) brings the Dock icon too.
+        NotificationCenter.default.addObserver(forName: NSWindow.didBecomeKeyNotification, object: nil,
+                                               queue: .main) { note in
             if let w = note.object as? NSWindow, Self.isAppWindow(w), NSApp.activationPolicy() != .regular {
                 NSApp.setActivationPolicy(.regular)
-            }
-        }
-        center.addObserver(forName: NSWindow.willCloseNotification, object: nil, queue: .main) { note in
-            guard let closing = note.object as? NSWindow, Self.isAppWindow(closing) else { return }
-            DispatchQueue.main.async {
-                if !NSApp.windows.contains(where: { $0 !== closing && Self.isAppWindow($0) && $0.isVisible }) {
-                    NSApp.setActivationPolicy(.accessory)
-                }
             }
         }
 
@@ -558,6 +570,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
+    // a click on the Dock icon, or opening StrataBar again from the Finder or Spotlight: the chat window when none of
+    // StrataBar's windows is open
+    func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
+        if !NSApp.windows.contains(where: { Self.isAppWindow($0) && $0.isVisible }) { Self.openChat?() }
+        return true
+    }
+
     /// the chat, API monitor and setup windows; not the menu bar item, its menu or a panel (an open dialog, an alert)
     static func isAppWindow(_ w: NSWindow) -> Bool { w.styleMask.contains(.titled) && !(w is NSPanel) }
 }
@@ -571,7 +590,7 @@ struct StrataBarApp: App {
         MenuBarExtra {
             MenuContent(strata: strata, setup: strata.setup)
         } label: {
-            Image(nsImage: StrataIcon.menuBarImage(strata.glyph))
+            MenuBarLabel(strata: strata)
         }
         .menuBarExtraStyle(.menu)
 
