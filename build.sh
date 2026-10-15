@@ -1,9 +1,17 @@
 #!/bin/bash
-# Builds StrataBar.app into ~/Applications (or the folder given as $1). Needs the Command Line Tools (swiftc).
+# Builds StrataBar.app into /Applications (~/Applications when this account cannot write there), or into the folder
+# given as $1. Needs the Command Line Tools (swiftc).
 set -euo pipefail
 cd "$(dirname "$0")"
 
-DEST="${1:-$HOME/Applications}"
+if [ $# -ge 1 ]; then
+  DEST="$1"
+elif [ -w /Applications ]; then
+  DEST=/Applications
+else
+  DEST="$HOME/Applications"                     # a standard account: /Applications takes an administrator
+  echo "/Applications is not writable for this account: installing into $DEST"
+fi
 APP="$DEST/StrataBar.app"
 SWIFTC=(swiftc -parse-as-library -swift-version 5 -O -target arm64-apple-macos15)
 

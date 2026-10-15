@@ -75,12 +75,13 @@ stopped.
 ```sh
 git clone https://github.com/fengzhyuan/Strata-UI.git
 cd Strata-UI
-./build.sh                       # builds ~/Applications/StrataBar.app
-open ~/Applications/StrataBar.app
+./build.sh                       # builds /Applications/StrataBar.app
+open /Applications/StrataBar.app
 ```
 
-`./build.sh /Applications` installs into another folder. The app is signed ad hoc, which is enough for a build
-made on the same Mac. Run `./build.sh` again after pulling changes: it replaces the app, and a running model is
+On an account that cannot write to `/Applications` (a standard, non-administrator account), it installs into
+`~/Applications` instead and says so; `./build.sh <folder>` installs into another folder. The app is signed ad hoc,
+which is enough for a build made on the same Mac. Run `./build.sh` again after pulling changes: it replaces the app, and a running model is
 not affected.
 
 ## Release builds
@@ -111,7 +112,8 @@ Resume** work for it. **Stop Service** stops only the server StrataBar started.
 
 ```sh
 launchctl bootout gui/$(id -u)/io.github.fengzhyuan.StrataBar.server   # if the service is running
-rm -rf ~/Applications/StrataBar.app "$HOME/Library/Application Support/StrataBar" ~/Library/Logs/StrataBar
+rm -rf /Applications/StrataBar.app ~/Applications/StrataBar.app   # wherever it was installed
+rm -rf "$HOME/Library/Application Support/StrataBar" ~/Library/Logs/StrataBar
 defaults delete io.github.fengzhyuan.StrataBar
 ```
 
