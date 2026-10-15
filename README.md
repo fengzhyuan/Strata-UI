@@ -19,6 +19,9 @@ existing HTTP API.
 - **Open Chat Window** shows Strata's own web app in a native window. The API key is taken from the run config, so
   nothing needs to be typed. The window handles image uploads, downloads (into `~/Downloads`) and links (opened in
   the default browser).
+- **Open API Monitor** shows Strata's `/api-monitor` page in its own window: the last 100 requests that apps sent
+  to the server, with their prompts and answers, kept in the server's memory only. It needs `"api_monitor": true`
+  in the run config; without it the item is greyed out.
 - **Copy API URL** copies `http://127.0.0.1:<port>/v1` for other apps.
 - **Show Log** opens the server's log in Console.
 - The menu bar icon shows the state: all three layers filled when the model is loaded, the top layer hollow when it

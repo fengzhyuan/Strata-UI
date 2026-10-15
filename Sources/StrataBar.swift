@@ -34,6 +34,7 @@ struct RunConfig {
     var port = 8080                                     // setup's default when the config has none
     var host = "127.0.0.1"
     var apiKey = ""
+    var apiMonitor = false                              // "api_monitor": the server serves /api-monitor
 
     /// the strata-*.json files that name an engine ("exe"), by name
     static func all() -> [RunConfig] {
@@ -59,6 +60,7 @@ struct RunConfig {
         if let p = obj["port"] as? Int { c.port = p }
         if let h = obj["host"] as? String, !["", "0.0.0.0", "::"].contains(h) { c.host = h }   // all interfaces
         if let k = obj["api_key"] as? String { c.apiKey = k }
+        c.apiMonitor = obj["api_monitor"] as? Bool ?? false
         return c
     }
 
@@ -104,6 +106,7 @@ final class StrataController: ObservableObject {
     @Published private(set) var frame = 0                   // the menu bar glyph's animation while busy
     @Published private(set) var configs: [String] = []      // the run configs' model names
     @Published private(set) var selectedConfig = ""
+    @Published private(set) var apiMonitor = false          // the chosen config turns the API monitor on
     private var timer: Timer?
     private var animator: Timer?
 
@@ -134,6 +137,7 @@ final class StrataController: ObservableObject {
         configs = RunConfig.all().map(\.name)
         let cfg = RunConfig.current()
         selectedConfig = cfg?.name ?? ""
+        apiMonitor = cfg?.apiMonitor ?? false
         async let job = Self.jobLoaded()
         let h: Health? = if let cfg { await Self.health(cfg) } else { nil }
         let j = await job
@@ -333,6 +337,11 @@ struct MenuContent: View {
             openWindow(id: "chat")
             NSApp.activate()
         }
+        Button("Open API Monitor") {
+            openWindow(id: "monitor")
+            NSApp.activate()
+        }
+        .disabled(!strata.apiMonitor)                   // the server has no /api-monitor without "api_monitor"
         switch s {
         case .loaded: Button("Pause") { strata.pause() }
         case .paused: Button("Resume") { strata.resume() }
@@ -365,10 +374,31 @@ struct MenuContent: View {
     }
 }
 
-// MARK: chat window: Strata's own web page
+// MARK: windows: Strata's own web pages
 
-struct ChatWindow: View {
+enum StrataPage {
+    case chat       // the web app, /
+    case monitor    // the API request monitor, /api-monitor
+
+    func url(_ cfg: RunConfig) -> URL {
+        self == .chat ? cfg.baseURL : cfg.baseURL.appendingPathComponent("api-monitor")
+    }
+
+    // each page keeps the API key where it reads it before its first request: set it there from the run config,
+    // so the window needs no typing and a key changed in the config applies on the next open
+    func keyScript(_ cfg: RunConfig) -> String {
+        guard !cfg.apiKey.isEmpty, let json = try? JSONSerialization.data(withJSONObject: [cfg.apiKey]) else { return "" }
+        let key = String(decoding: json, as: UTF8.self) + "[0]"            // a safely quoted JavaScript string
+        return switch self {
+        case .chat: "try { localStorage.setItem('strata.apikey', JSON.stringify(\(key))) } catch (e) {}"
+        case .monitor: "try { sessionStorage.setItem('strata.monitor.key', \(key)) } catch (e) {}"
+        }
+    }
+}
+
+struct PageWindow: View {
     @ObservedObject var strata: StrataController
+    let page: StrataPage
 
     var body: some View {
         switch strata.state {
@@ -383,7 +413,13 @@ struct ChatWindow: View {
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
         default:
             if let cfg = RunConfig.current() {
-                StrataWebView(url: cfg.baseURL, apiKey: cfg.apiKey)
+                if page == .monitor && !cfg.apiMonitor {
+                    Text("The API monitor is off. Add \"api_monitor\": true to \((cfg.path as NSString).lastPathComponent) and restart the service.")
+                        .padding()
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                } else {
+                    StrataWebView(url: page.url(cfg), setup: page.keyScript(cfg))
+                }
             }
         }
     }
@@ -391,18 +427,15 @@ struct ChatWindow: View {
 
 struct StrataWebView: NSViewRepresentable {
     let url: URL
-    let apiKey: String
+    let setup: String                                   // JavaScript run before the page's own scripts
 
     func makeCoordinator() -> Coordinator { Coordinator() }
 
     func makeNSView(context: Context) -> WKWebView {
         let config = WKWebViewConfiguration()
-        // the page keeps its API key in localStorage["strata.apikey"] as JSON: set it from the run config, so the
-        // window needs no typing and a key changed in the config applies on the next open
-        if !apiKey.isEmpty, let json = try? JSONSerialization.data(withJSONObject: [apiKey]) {
-            let js = "try { localStorage.setItem('strata.apikey', JSON.stringify(\(String(decoding: json, as: UTF8.self))[0])) } catch (e) {}"
+        if !setup.isEmpty {
             config.userContentController.addUserScript(
-                WKUserScript(source: js, injectionTime: .atDocumentStart, forMainFrameOnly: true))
+                WKUserScript(source: setup, injectionTime: .atDocumentStart, forMainFrameOnly: true))
         }
         let web = WKWebView(frame: .zero, configuration: config)
         web.uiDelegate = context.coordinator
@@ -510,9 +543,16 @@ struct StrataBarApp: App {
         .menuBarExtraStyle(.menu)
 
         Window("Strata", id: "chat") {
-            ChatWindow(strata: strata)
+            PageWindow(strata: strata, page: .chat)
         }
         .defaultSize(width: 1000, height: 760)
+        .defaultLaunchBehavior(.suppressed)
+        .restorationBehavior(.disabled)
+
+        Window("API Monitor", id: "monitor") {
+            PageWindow(strata: strata, page: .monitor)
+        }
+        .defaultSize(width: 1200, height: 800)
         .defaultLaunchBehavior(.suppressed)
         .restorationBehavior(.disabled)
     }
