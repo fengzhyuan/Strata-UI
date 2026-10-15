@@ -344,15 +344,9 @@ struct MenuContent: View {
             Text("⚠️ \(e)")
         }
         Divider()
-        Button("Open Chat Window") {
-            openWindow(id: "chat")
-            NSApp.activate()
-        }
-        Button("Open API Monitor") {
-            openWindow(id: "monitor")
-            NSApp.activate()
-        }
-        .disabled(!strata.apiMonitor)                   // the server has no /api-monitor without "api_monitor"
+        Button("Open Chat Window") { open("chat") }
+        Button("Open API Monitor") { open("monitor") }
+            .disabled(!strata.apiMonitor)               // the server has no /api-monitor without "api_monitor"
         switch s {
         case .loaded: Button("Pause") { strata.pause() }
         case .paused: Button("Resume") { strata.resume() }
@@ -365,10 +359,7 @@ struct MenuContent: View {
         }
         Divider()
         if strata.configs.isEmpty {
-            Button("Set Up Strata…") {
-                openWindow(id: "setup")
-                NSApp.activate()
-            }
+            Button("Set Up Strata…") { open("setup") }
             Button("Choose Strata Folder…") { strata.chooseFolder() }
         } else if strata.configs.count > 1 {
             Menu("Model") {
@@ -386,6 +377,13 @@ struct MenuContent: View {
         Button("Show Log") { strata.showLog() }
         Divider()
         Button("Quit StrataBar") { NSApp.terminate(nil) }
+    }
+
+    // the Dock icon first, so the window opens in front with the app's menu bar (AppDelegate takes it away again)
+    private func open(_ id: String) {
+        NSApp.setActivationPolicy(.regular)
+        openWindow(id: id)
+        NSApp.activate()
     }
 }
 
@@ -519,8 +517,25 @@ struct StrataWebView: NSViewRepresentable {
 // MARK: app
 
 final class AppDelegate: NSObject, NSApplicationDelegate {
-    // a menu bar app has no visible main menu, so ⌘C/⌘V/⌘X/⌘A/⌘Z/⌘W are sent to the text field or window directly
     func applicationDidFinishLaunching(_ notification: Notification) {
+        // as Ollama: a Dock icon (and ⌘Tab) while one of StrataBar's windows is open, else only the menu bar icon.
+        // A window shown without the menu (the first start's Set up Strata) brings the icon too.
+        let center = NotificationCenter.default
+        center.addObserver(forName: NSWindow.didBecomeKeyNotification, object: nil, queue: .main) { note in
+            if let w = note.object as? NSWindow, Self.isAppWindow(w), NSApp.activationPolicy() != .regular {
+                NSApp.setActivationPolicy(.regular)
+            }
+        }
+        center.addObserver(forName: NSWindow.willCloseNotification, object: nil, queue: .main) { note in
+            guard let closing = note.object as? NSWindow, Self.isAppWindow(closing) else { return }
+            DispatchQueue.main.async {
+                if !NSApp.windows.contains(where: { $0 !== closing && Self.isAppWindow($0) && $0.isVisible }) {
+                    NSApp.setActivationPolicy(.accessory)
+                }
+            }
+        }
+
+        // a menu bar app has no visible main menu, so ⌘C/⌘V/⌘X/⌘A/⌘Z/⌘W are sent to the text field or window directly
         NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
             let mods = event.modifierFlags.intersection(.deviceIndependentFlagsMask)
             guard mods == .command || mods == [.command, .shift], let key = event.charactersIgnoringModifiers?.lowercased()
@@ -542,6 +557,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             return event
         }
     }
+
+    /// the chat, API monitor and setup windows; not the menu bar item, its menu or a panel (an open dialog, an alert)
+    static func isAppWindow(_ w: NSWindow) -> Bool { w.styleMask.contains(.titled) && !(w is NSPanel) }
 }
 
 @main

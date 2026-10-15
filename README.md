@@ -31,6 +31,9 @@ existing HTTP API.
 - The menu bar icon shows the state: all three layers filled when the model is loaded, the top layer hollow when it
   is paused, the layers filling up while it starts or loads, and the icon dimmed when the service is stopped.
 
+StrataBar lives in the menu bar. While one of its windows is open it also shows in the Dock and in ⌘Tab, as Ollama
+does; with its windows closed it is in the menu bar only.
+
 Nothing starts at login: the service starts only when you choose **Start Service**.
 
 ## What you need
