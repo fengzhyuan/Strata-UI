@@ -4,10 +4,11 @@
   <sub>Apple Silicon · macOS 15 or newer · signed and notarized · <a href="https://github.com/fengzhyuan/Strata-UI/releases">all releases</a></sub>
 </p>
 
-# StrataBar
+# StrataBar: a macOS menu bar app for Strata
 
-A macOS menu bar app for [Strata](https://github.com/Niko1221/Strata), in the style of Ollama's: start, pause and
-stop the Strata server, and chat with it in a native window, without keeping a terminal open.
+StrataBar (this repository, Strata-UI) is a menu bar app and GUI for [Strata](https://github.com/Niko1221/Strata),
+which runs the Qwen3.8-Flash-Next model locally, on an Apple Silicon Mac. In the style of Ollama's app: start, pause
+and stop the Strata server, and chat with it in a native window, without keeping a terminal open.
 
 This is an unofficial companion app. It is not part of Strata and is not maintained by its authors. It does not
 change Strata: it starts Strata's own server with the run config Strata's setup wrote, and uses the server's
@@ -35,6 +36,13 @@ StrataBar lives in the menu bar. Once one of its windows has been opened, it als
 it quits, as Ollama does; a click on its Dock icon opens the chat window again.
 
 Nothing starts at login: the service starts only when you choose **Start Service**.
+
+## StrataBar or the Strata app?
+
+Strata has its own app ([Option A in Strata's README](https://github.com/Niko1221/Strata#option-a-the-strata-app)),
+with the engine inside. StrataBar is for Strata installed in a folder with its `./setup.sh`, as StrataBar's own
+[Set up Strata](#setting-up-strata) does: it runs that install's server from the menu bar, as a launchd job, and opens
+its web app and API monitor in native windows.
 
 ## What you need
 
