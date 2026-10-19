@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>StrataBar: macOS menu bar app for Strata (local LLM) · Strata-UI</title>
+<meta name="description" content="StrataBar is an Ollama-style macOS menu bar app for Strata, the local LLM server for Qwen3.8-Flash-Next: start, pause and stop it, chat in a native window, watch API requests.">
+<link rel="canonical" href="https://fengzhyuan.github.io/Strata-UI/">
+<link rel="icon" type="image/png" href="icon.png">
+<meta property="og:type" content="website">
+<meta property="og:title" content="StrataBar: macOS menu bar app for Strata">
+<meta property="og:description" content="An Ollama-style menu bar app for Strata on Apple Silicon Macs: start, pause and stop the local model server, chat and watch API requests in native windows.">
+<meta property="og:url" content="https://fengzhyuan.github.io/Strata-UI/">
+<meta property="og:image" content="https://fengzhyuan.github.io/Strata-UI/icon.png">
+<meta name="twitter:card" content="summary">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "StrataBar",
+  "alternateName": "Strata-UI",
+  "description": "An Ollama-style macOS menu bar app for Strata, the local LLM server: start, pause and stop the server, chat with it in a native window, and watch API requests.",
+  "applicationCategory": "DeveloperApplication",
+  "operatingSystem": "macOS 15 or newer (Apple Silicon)",
+  "softwareVersion": "1.2",
+  "downloadUrl": "https://github.com/fengzhyuan/Strata-UI/releases/latest/download/StrataBar.zip",
+  "url": "https://fengzhyuan.github.io/Strata-UI/",
+  "sameAs": "https://github.com/fengzhyuan/Strata-UI",
+  "image": "https://fengzhyuan.github.io/Strata-UI/icon.png",
+  "license": "https://opensource.org/licenses/MIT",
+  "isAccessibleForFree": true,
+  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+  "author": { "@type": "Person", "name": "fengzhyuan", "url": "https://github.com/fengzhyuan" }
+}
+</script>
+<style>
+  :root {
+    --bg: #fbfaf8; --fg: #1d1d1f; --muted: #5f5f66; --line: #e3e1dc;
+    --card: #ffffff; --accent: #2f5bd3; --accent-fg: #ffffff; --code: #f1efea;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #141416; --fg: #ececee; --muted: #a1a1aa; --line: #2c2c31;
+      --card: #1c1c20; --accent: #7aa2ff; --accent-fg: #0d0d10; --code: #24242a;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--fg);
+    font: 16px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+  }
+  main { max-width: 760px; margin: 0 auto; padding: 48px 16px 64px; }
+  header { text-align: center; margin-bottom: 40px; }
+  header img { width: 112px; height: 112px; }
+  h1 { font-size: 2rem; line-height: 1.2; margin: 16px 0 8px; letter-spacing: -0.01em; }
+  .lede { color: var(--muted); font-size: 1.1rem; margin: 0 auto 24px; max-width: 600px; }
+  .actions { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+  .btn {
+    display: inline-block; padding: 10px 18px; border-radius: 8px; text-decoration: none; font-weight: 600;
+    border: 1px solid var(--line); color: var(--fg); background: var(--card);
+  }
+  .btn.primary { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+  .meta { color: var(--muted); font-size: 0.85rem; margin-top: 12px; }
+  h2 { font-size: 1.3rem; margin: 40px 0 12px; }
+  ul { padding-left: 1.2em; }
+  li { margin: 6px 0; }
+  a { color: var(--accent); }
+  code { background: var(--code); padding: 1px 5px; border-radius: 4px; font-size: 0.9em; }
+  pre { background: var(--code); padding: 14px 16px; border-radius: 8px; overflow-x: auto; }
+  pre code { background: none; padding: 0; }
+  footer { border-top: 1px solid var(--line); margin-top: 48px; padding-top: 16px; color: var(--muted); font-size: 0.9rem; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <img src="icon.png" alt="StrataBar icon" width="112" height="112">
+    <h1>StrataBar: a macOS menu bar app for Strata</h1>
+    <p class="lede">An Ollama-style menu bar app and GUI for <a href="https://github.com/Niko1221/Strata">Strata</a>,
+      which runs the Qwen3.8-Flash-Next model locally on an Apple Silicon Mac. Start, pause and stop the Strata
+      server, and chat with it in a native window, without keeping a terminal open.</p>
+    <div class="actions">
+      <a class="btn primary" href="https://github.com/fengzhyuan/Strata-UI/releases/latest/download/StrataBar.zip">Download StrataBar for macOS</a>
+      <a class="btn" href="https://github.com/fengzhyuan/Strata-UI">Source on GitHub</a>
+    </div>
+    <p class="meta">Apple Silicon · macOS 15 or newer · signed and notarized · MIT license ·
+      <a href="https://github.com/fengzhyuan/Strata-UI/releases">all releases</a></p>
+  </header>
+
+  <h2>What it does</h2>
+  <ul>
+    <li><strong>Start Service / Stop Service</strong> run the Strata server as a launchd job, so quitting StrataBar
+      or closing a terminal leaves the model as it is.</li>
+    <li><strong>Pause / Resume</strong> unload and load the model through the server's <code>POST /unload</code>
+      and <code>POST /load</code>: the memory is freed while paused, and the HTTP server stays up.</li>
+    <li><strong>Open Chat Window</strong> shows Strata's own web app in a native window, with the API key taken from
+      the run config. Image uploads, downloads and links work.</li>
+    <li><strong>Open API Monitor</strong> shows the last 100 requests that apps sent to the server, with their
+      prompts and answers.</li>
+    <li><strong>Copy API URL</strong> copies <code>http://127.0.0.1:&lt;port&gt;/v1</code> for other apps, and
+      <strong>Show Log</strong> opens the server's log in Console.</li>
+    <li><strong>Set Up Strata</strong> checks the Mac (chip, macOS, Command Line Tools, memory, disk) and installs
+      Strata's latest release when there is none.</li>
+    <li>The menu bar icon shows the state: loaded, paused, starting or stopped.</li>
+  </ul>
+
+  <h2>StrataBar or the Strata app?</h2>
+  <p>Strata has its own app (<a href="https://github.com/Niko1221/Strata#option-a-the-strata-app">Option A in
+    Strata's README</a>), with the engine inside. StrataBar is for Strata installed in a folder with its
+    <code>./setup.sh</code>, as StrataBar's own Set Up Strata does: it runs that install's server from the menu bar,
+    as a launchd job, and opens its web app and API monitor in native windows.</p>
+
+  <h2>What you need</h2>
+  <ul>
+    <li>An Apple Silicon Mac with macOS 15 or newer.</li>
+    <li>Strata, installed with its <code>./setup.sh</code> in <code>~/Strata</code> (another folder can be chosen
+      in the menu). Without it, StrataBar offers to set it up.</li>
+  </ul>
+
+  <h2>Build from source</h2>
+  <pre><code>git clone https://github.com/fengzhyuan/Strata-UI.git
+cd Strata-UI
+./build.sh                       # builds /Applications/StrataBar.app
+open /Applications/StrataBar.app</code></pre>
+  <p>It needs the Command Line Tools (<code>xcode-select --install</code>) for <code>swiftc</code>. More in the
+    <a href="https://github.com/fengzhyuan/Strata-UI#readme">README</a>.</p>
+
+  <footer>
+    StrataBar is an unofficial companion app. It is not part of Strata and is not maintained by its authors.
+    · <a href="https://github.com/fengzhyuan/Strata-UI">github.com/fengzhyuan/Strata-UI</a>
+    · <a href="https://github.com/fengzhyuan/Strata-UI/blob/main/LICENSE">MIT license</a>
+  </footer>
+</main>
+</body>
+</html>
