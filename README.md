@@ -44,6 +44,9 @@ with the engine inside. StrataBar is for Strata installed in a folder with its `
 [Set up Strata](#setting-up-strata) does: it runs that install's server from the menu bar, as a launchd job, and opens
 its web app and API monitor in native windows.
 
+The two do not share an install: the app keeps its own install and data folders and does not use a `./setup.sh`
+install's run configs or packs.
+
 ## What you need
 
 - An Apple Silicon Mac with macOS 15 or newer, as Strata on a Mac needs ([Strata's docs/MAC.md](https://github.com/Niko1221/Strata/blob/main/docs/MAC.md)).
